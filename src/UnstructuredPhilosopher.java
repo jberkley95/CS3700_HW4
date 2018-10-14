@@ -1,15 +1,16 @@
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author John Berkley
  * CPP Class: CS3700
  * Date Created: Oct 14, 2018
  */
-public class StructuredPhilosopher implements Runnable {
-    private final Object leftFork;
-    private final Object rightFork;
+public class UnstructuredPhilosopher implements Runnable {
+    private final ReentrantLock leftFork;
+    private final ReentrantLock rightFork;
 
-    StructuredPhilosopher(Object leftFork, Object rightFork) {
+    UnstructuredPhilosopher(ReentrantLock leftFork, ReentrantLock rightFork) {
         this.leftFork = leftFork;
         this.rightFork = rightFork;
     }
@@ -32,15 +33,22 @@ public class StructuredPhilosopher implements Runnable {
             while (true) {
                 think();
                 System.out.println(Thread.currentThread().getName() + " attempting to acquire left fork.");
-                synchronized (leftFork) {
+                leftFork.lock();
+                try {
                     System.out.println(Thread.currentThread().getName() + " picked up left fork.");
                     System.out.println(Thread.currentThread().getName() + " attempting to acquire right fork.");
-                    synchronized (rightFork) {
+                    rightFork.lock();
+                    try {
                         System.out.println(Thread.currentThread().getName() + " picked up right fork.");
                         eat();
+                    } finally {
+                        rightFork.unlock();
                         System.out.println(Thread.currentThread().getName() + " put down right fork.");
                     }
+                } finally {
+                    leftFork.unlock();
                     System.out.println(Thread.currentThread().getName() + " put down left fork.");
+
                 }
             }
         } catch (InterruptedException e) {
